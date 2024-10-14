@@ -1,0 +1,60 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest # 
+
+
+    container_name: mealie
+    restart: always
+    ports:
+        - "9925:9000" # 
+
+
+    deploy:
+      resources:
+        limits:
+          memory: 1000M # 
+
+
+    volumes:
+      - ./mealie-data:/app/data/
+    environment:
+      # Set Backend ENV Variables Here
+      ALLOW_SIGNUP: "true"
+      TZ: Europe/Berlin
+      MAX_WORKERS: 1
+      WEB_CONCURRENCY: 1
+      BASE_URL: https://mealie.mydomain.de
+      DEFAULT_EMAIL: myemail@yahoo.de
+      DEFAULT_GROUP: Zuhause
+      TOKEN_TIME: 48
+      API_PORT: 9000
+      API_DOCS: "True"
+      LOG_LEVEL: info
+      DAILY_SCHEDULE_TIME: 23:45
+      SECURITY_MAX_LOGIN_ATTEMPTS: 5
+      SECURITY_USER_LOCKOUT_TIME: 24
+      # Database Settings
+      DB_ENGINE: postgres
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealie
+      POSTGRES_SERVER: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mealie
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    restart: always
+    volumes:
+      - ./mealie-pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: mealie
+      POSTGRES_USER: mealie
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
